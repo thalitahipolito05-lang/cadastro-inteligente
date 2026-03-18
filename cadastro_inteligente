@@ -1,0 +1,208 @@
+// Seleciona os elementos
+const nome = document.getElementById('nome');
+const email = document.getElementById('email');
+const senha = document.getElementById('senha');
+const confirmarSenha = document.getElementById('confirmarSenha');
+const form = document.getElementById('cadastroForm');
+const submitBtn = document.getElementById('submitBtn');
+const successMessage = document.getElementById('successMessage');
+const strengthBar = document.getElementById('strengthBar');
+const strengthText = document.getElementById('strengthText');
+
+nome.addEventListener('blur', () => validarCampo(nome, validarNome));
+email.addEventListener('blur', () => validarCampo(email, validarEmail));
+senha.addEventListener('input', () => {
+    validarCampo(senha, validarSenha);
+    atualizarForcaSenha();
+    if (confirmarSenha.value) {
+        validarCampo(confirmarSenha, validarConfirmacaoSenha);
+    }
+});
+senha.addEventListener('blur', () => validarCampo(senha, validarSenha));
+confirmarSenha.addEventListener('input', () => validarCampo(confirmarSenha, validarConfirmacaoSenha));
+confirmarSenha.addEventListener('blur', () => validarCampo(confirmarSenha, validarConfirmacaoSenha));
+
+function validarCampo(input, funcaoValidadora) {
+    const msgErro = document.getElementById(input.id + '-error');
+    const resultado = funcaoValidadora(input.value);
+    
+    if (!resultado.valido) {
+        input.classList.add('error');
+        input.classList.remove('success');
+        msgErro.textContent = resultado.mensagem;
+    } else {
+        input.classList.remove('error');
+        input.classList.add('success');
+        msgErro.textContent = '';
+    }
+    
+    return resultado.valido;
+}
+
+function validarNome(valor) {
+    if (!valor.trim()) {
+        return { valido: false, mensagem: '📛 Nome é obrigatório' };
+    }
+    if (valor.length < 3) {
+        return { valido: false, mensagem: '📛 Mínimo 3 caracteres' };
+    }
+    if (valor.length > 50) {
+        return { valido: false, mensagem: '📛 Máximo 50 caracteres' };
+    }
+    return { valido: true };
+}
+
+function validarEmail(valor) {
+    const regex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    
+    if (!valor) {
+        return { valido: false, mensagem: '📧 E-mail obrigatório' };
+    }
+    if (!regex.test(valor)) {
+        return { valido: false, mensagem: '📧 Formato inválido (ex: nome@dominio.com)' };
+    }
+    return { valido: true };
+}
+
+function validarSenha(valor) {
+    if (!valor) {
+        return { valido: false, mensagem: '🔒 Senha obrigatória' };
+    }
+    if (valor.length < 8) {
+        return { valido: false, mensagem: '🔒 Mínimo 8 caracteres' };
+    }
+    if (!/[A-Z]/.test(valor)) {
+        return { valido: false, mensagem: '🔒 Precisa de 1 letra maiúscula' };
+    }
+    if (!/[0-9]/.test(valor)) {
+        return { valido: false, mensagem: '🔒 Precisa de 1 número' };
+    }
+    return { valido: true };
+}
+
+function validarConfirmacaoSenha(valor) {
+    if (!valor) {
+        return { valido: false, mensagem: '🔒 Confirmação obrigatória' };
+    }
+    if (valor !== senha.value) {
+        return { valido: false, mensagem: '🔒 As senhas não coincidem' };
+    }
+    return { valido: true };
+}
+
+// Exercício 5: Indicador de Força da Senha
+function atualizarForcaSenha() {
+    const valor = senha.value;
+    let forca = 0;
+    const criterios = [
+        valor.length >= 8,
+        /[A-Z]/.test(valor),
+        /[0-9]/.test(valor),
+        /[^A-Za-z0-9]/.test(valor) // Caractere especial
+    ];
+    
+    forca = criterios.filter(Boolean).length;
+    
+    // Remove todas as classes
+    strengthBar.className = 'strength-bar';
+    
+    switch(forca) {
+        case 0:
+        case 1:
+            strengthBar.classList.add('fraca');
+            strengthText.textContent = 'Força: Fraca';
+            strengthText.style.color = 'var(--vermelho)';
+            break;
+        case 2:
+            strengthBar.classList.add('razoavel');
+            strengthText.textContent = 'Força: Razoável';
+            strengthText.style.color = 'var(--laranja)';
+            break;
+        case 3:
+            strengthBar.classList.add('boa');
+            strengthText.textContent = 'Força: Boa';
+            strengthText.style.color = 'var(--amarelo)';
+            break;
+        case 4:
+            strengthBar.classList.add('forte');
+            strengthText.textContent = 'Força: Forte';
+            strengthText.style.color = 'var(--verde)';
+            break;
+    }
+    
+    if (!valor) {
+        strengthBar.className = 'strength-bar';
+        strengthText.textContent = '';
+    }
+}
+
+function validarFormulario() {
+    const valido = 
+        validarCampo(nome, validarNome) &&
+        validarCampo(email, validarEmail) &&
+        validarCampo(senha, validarSenha) &&
+        validarCampo(confirmarSenha, validarConfirmacaoSenha);
+    
+    return valido;
+}
+
+// Exercício 6: Simulação de Envio com Loading
+form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    
+    if (!validarFormulario()) {
+        return;
+    }
+    
+    // Desabilita o botão e mostra loading
+    submitBtn.disabled = true;
+    const btnText = submitBtn.querySelector('.btn-text');
+    const spinner = submitBtn.querySelector('.spinner');
+    
+    btnText.classList.add('hidden');
+    spinner.classList.remove('hidden');
+    
+    // Simula chamada de API
+    try {
+        await new Promise(resolve => setTimeout(resolve, 2000));
+        
+        // Sucesso!
+        successMessage.classList.remove('hidden');
+        form.reset();
+        
+        // Remove classes de sucesso dos inputs
+        [nome, email, senha, confirmarSenha].forEach(input => {
+            input.classList.remove('success');
+        });
+        
+        // Esconde mensagem após 3 segundos
+        setTimeout(() => {
+            successMessage.classList.add('hidden');
+        }, 3000);
+        
+    } catch (error) {
+        console.error('Erro no cadastro:', error);
+    } finally {
+        // Reabilita o botão
+        submitBtn.disabled = false;
+        btnText.classList.remove('hidden');
+        spinner.classList.add('hidden');
+    }
+});
+
+// Validação inicial para esconder mensagens de erro
+[nome, email, senha, confirmarSenha].forEach(input => {
+    input.addEventListener('input', () => {
+        if (input.classList.contains('error') || input.classList.contains('success')) {
+            if (input.id === 'senha') {
+                validarCampo(input, validarSenha);
+            } else if (input.id === 'confirmarSenha') {
+                validarCampo(input, validarConfirmacaoSenha);
+            } else if (input.id === 'nome') {
+                validarCampo(input, validarNome);
+            } else if (input.id === 'email') {
+                validarCampo(input, validarEmail);
+            }
+        }
+    });
+});
